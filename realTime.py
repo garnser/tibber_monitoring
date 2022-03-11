@@ -1,29 +1,29 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import influxdb_client
 import asyncio
 import aiohttp
 import tibber
+import configparser
 from influxdb_client.client.write_api import SYNCHRONOUS
+from daemonize import Daemonize
 
-bucket = ""
-org = ""
-token = ""
-# Store the URL of your InfluxDB instance
-url="http://localhost:8086"
-ACCESS_TOKEN=""
+pid = "/var/run/tibberRealTime.pid"
+
+conf = configparser.ConfigParser()
+conf.read('config.ini')
 
 client = influxdb_client.InfluxDBClient(
-   url=url,
-   token=token,
-   org=org
+   url=conf["influx"]["url"],
+   token=conf["influx"]["token"],
+   org=conf["influx"]["org"]
 )
 
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
 def _writeInflux(field, value):
     p = influxdb_client.Point("tibber").field(field, value)
-    write_api.write(bucket=bucket, org=org, record=p)
+    write_api.write(bucket=conf["influx"]["bucket"], org=conf["influx"]["org"], record=p)
 
 def _callback(pkg):
     data = pkg.get("data")
@@ -50,11 +50,13 @@ def _callback(pkg):
 
 async def run():
     async with aiohttp.ClientSession() as session:
-        tibber_connection = tibber.Tibber(ACCESS_TOKEN, websession=session)
+        tibber_connection = tibber.Tibber(conf["tibber"]["token"], websession=session)
         await tibber_connection.update_info()
     home = tibber_connection.get_homes()[0]
     await home.rt_subscribe(_callback)
 
+daemon = Daemonize(app="tibberRealTime", pid=pid, action=run)
+daemon.start()
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()

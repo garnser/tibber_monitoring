@@ -5,22 +5,19 @@ import asyncio
 import tibber
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-bucket = ""
-org = ""
-token = ""
-url="http://localhost:8086"
-ACCESS_TOKEN=""
+conf = configparser.ConfigParser()
+conf.read('config.ini')
 
 client = influxdb_client.InfluxDBClient(
-   url=url,
-   token=token,
-   org=org
+   url=conf["influx"]["url"],
+   token=conf["influx"]["token"],
+   org=conf["influx"]["org"]
 )
 
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
 async def main():
-    access_token = ACCESS_TOKEN
+    access_token = conf["tibber"]["token"]
     tibber_connection = tibber.Tibber(access_token)
     await tibber_connection.update_info()
     home = tibber_connection.get_homes()[0]
@@ -29,7 +26,7 @@ async def main():
 
     await tibber_connection.close_connection()
     p = influxdb_client.Point("tibber").field("cost", home.current_price_info["total"])
-    write_api.write(bucket=bucket, org=org, record=p)
+    write_api.write(bucket=conf["influx"]["bucket"], org=conf["influx"]["org"], record=p)
 
 
 
