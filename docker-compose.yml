@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+  grafana:
+    image: grafana/grafana:8.1.5
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    user: '1001'
+    volumes:
+      - /opt/grafana/conf:/etc/grafana:rw
+      - /opt/grafana/grafana.db:/var/lib/grafana/grafana.db:rw
+      - /opt/grafana/data:/usr/share/grafana/data:rw
+  influxdb:
+    image: influxdb:2.0.7
+    restart: unless-stopped
+    volumes:
+      - /opt/influxdb:/var/lib/influxdb2:rw
+    ports:
+      - "8086:8086"
+      - "9999:9999"
