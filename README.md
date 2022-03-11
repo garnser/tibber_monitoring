@@ -13,3 +13,6 @@ token = "" # influx token
 url="http://localhost:8086"
 ACCESS_TOKEN="" # Tibber API Token
 ```
+
+Import dashboard to grafana and point it to Influx.
+![Tibber Dashboard](tibber_dashboard.png)
